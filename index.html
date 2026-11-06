@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="ur" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS Panel Dashboard (sms-panel.com)</title>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #0f172a;
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .btn-animated {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-animated:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.5);
+            background: linear-gradient(135deg, #2563eb, #0891b2);
+        }
+
+        .btn-animated:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 35px 30px;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 400px;
+            display: none;
+        }
+
+        .auth-card.active {
+            display: block;
+        }
+
+        .auth-card h2 {
+            text-align: center;
+            margin-bottom: 8px;
+            color: #38bdf8;
+            font-size: 24px;
+        }
+
+        .auth-card p.subtitle {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 13px;
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #cbd5e1;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px 14px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: white;
+            outline: none;
+        }
+
+        .captcha-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .captcha-box {
+            background: #334155;
+            color: #38bdf8;
+            font-size: 22px;
+            font-weight: bold;
+            letter-spacing: 6px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            user-select: none;
+            font-family: monospace;
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .captcha-refresh {
+            background: #334155;
+            border: none;
+            color: #38bdf8;
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn-full {
+            width: 100%;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+
+        .switch-text {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .switch-text span {
+            color: #38bdf8;
+            cursor: pointer;
+            text-decoration: underline;
+            font-weight: 600;
+        }
+
+        .alert-msg {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            text-align: center;
+            display: none;
+        }
+        .alert-danger { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        .toast-msg {
+            background: #1e293b;
+            border-left: 4px solid #22c55e;
+            color: #f8fafc;
+            padding: 14px 20px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            animation: slideIn 0.3s ease, fadeOut 0.5s ease 2.5s forwards;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; visibility: hidden; } }
+
+        .dashboard-wrapper {
+            display: none;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .navbar-custom {
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { font-size: 20px; font-weight: bold; color: #38bdf8; }
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .role-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .badge-admin { background: #ef4444; color: white; }
+        .badge-client { background: #10b981; color: white; }
+        .btn-logout { background: #334155; border: none; color: white; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .main-content { padding: 30px; max-width: 1200px; margin: 0 auto; width: 100%; }
+        .action-buttons-row { display: flex; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: #1e293b; border: 1px solid #334155; padding: 20px; border-radius: 12px; display: flex; align-items: center; gap: 15px; }
+        .stat-icon { width: 50px; height: 50px; border-radius: 10px; background: rgba(56, 189, 248, 0.1); color: #38bdf8; display: flex; justify-content: center; align-items: center; font-size: 22px; }
+        .stat-details h4 { color: #94a3b8; font-size: 13px; margin-bottom: 5px; }
+        .stat-details h2 { font-size: 24px; color: white; }
+        .card-panel { background: #1e293b; border: 1px solid #334155; padding: 25px; border-radius: 12px; margin-bottom: 30px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 12px; }
+        .card-header h3 { color: #f8fafc; font-size: 18px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        table th, table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #334155; font-size: 14px; }
+        table th { background: #0f172a; color: #94a3b8; }
+        .otp-code { background: #22c55e; color: black; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-family: monospace; }
+        .admin-only { display: none; }
+        .api-badge-disconnected { color: #ef4444; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+        .api-badge-connected { color: #22c55e; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 25px;
+            width: 90%;
+            max-width: 500px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="auth-container" id="authContainer">
+        <div class="auth-card active" id="loginCard">
+            <h2><i class="fa-solid fa-signal"></i> SMS-PANEL</h2>
+            <p class="subtitle">Enter your credentials to access portal</p>
+            
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <label for="loginUsername">Username</label>
+                    <input type="text" id="loginUsername" placeholder="Enter username" required>
+                </div>
+                <div class="input-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" required>
+                </div>
+                <div class="input-group">
+                    <label>Verification Captcha</label>
+                    <div class="captcha-row">
+                        <div id="loginCaptchaBox" class="captcha-box">2022</div>
+                        <button type="button" class="captcha-refresh" onclick="nextCaptcha('login')"><i class="fa-solid fa-rotate-right"></i></button>
+                    </div>
+                    <input type="text" id="loginCaptchaInput" placeholder="Enter 4-digit captcha" maxlength="4" required>
+                </div>
+                <button type="submit" class="btn-animated btn-full">Login</button>
+                <div id="loginAlert" class="alert-msg"></div>
+                <div class="switch-text">
+                    Don't have an account? <span onclick="switchCard('signup')">Sign Up</span>
+                </div>
+            </form>
+        </div>
+
+        <div class="auth-card" id="signupCard">
+            <h2><i class="fa-solid fa-user-plus"></i> Create Account</h2>
+            <p class="subtitle">Register with Gmail & Phone Number</p>
+            
+            <form id="signupForm" onsubmit="handleSignup(event)">
+                <div class="input-group">
+                    <label for="signupUsername">Username</label>
+                    <input type="text" id="signupUsername" placeholder="Choose username" required>
+                </div>
+                <div class="input-group">
+                    <label for="signupEmail">Gmail Address</label>
+                    <input type="email" id="signupEmail" placeholder="e.g. user@gmail.com" required>
+                </div>
+                <div class="input-group">
+                    <label for="signupPhone">Phone Number</label>
+                    <input type="text" id="signupPhone" placeholder="e.g. +923001234567" required>
+                </div>
+                <div class="input-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" placeholder="••••••••" required>
+                </div>
+                <div class="input-group">
+                    <label>Verification Captcha</label>
+                    <div class="captcha-row">
+                        <div id="signupCaptchaBox" class="captcha-box">2022</div>
+                        <button type="button" class="captcha-refresh" onclick="nextCaptcha('signup')"><i class="fa-solid fa-rotate-right"></i></button>
+                    </div>
+                    <input type="text" id="signupCaptchaInput" placeholder="Enter 4-digit captcha" maxlength="4" required>
+                </div>
+                <button type="submit" class="btn-animated btn-full">Register Account</button>
+                <div id="signupAlert" class="alert-msg"></div>
+                <div class="switch-text">
+                    Already have an account? <span onclick="switchCard('login')">Login</span>
+                </div>
+            </form>
+        </div>
+  </div>
+      <div id="dashboardSection" class="dashboard-wrapper">
+        <nav class="navbar-custom">
+            <div class="logo"><i class="fa-solid fa-signal"></i> sms-panel.com</div>
+            <div class="user-info">
+                <span id="displayUsername">User</span>
+                <span id="displayRole" class="role-badge">Role</span>
+                <button class="btn-logout" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+            </div>
+        </nav>
+
+        <div class="main-content">
+            <div class="action-buttons-row">
+                <button class="btn-animated" onclick="openGetNumbersModal()"><i class="fa-solid fa-list-ol"></i> Get Numbers</button>
+                <button class="btn-animated" onclick="viewSMSReports()"><i class="fa-solid fa-chart-line"></i> SMS Report</button>
+                <button class="btn-animated" onclick="openSupportModal()"><i class="fa-brands fa-whatsapp"></i> Support Team</button>
+                <button class="btn-animated admin-only" id="clientNavBtn" onclick="scrollToClientPanel()"><i class="fa-solid fa-user-plus"></i> Client Portal</button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-calendar-day"></i></div>
+                    <div class="stat-details">
+                        <h4>Day ODPs</h4>
+                        <h2 id="dayCount">0</h2>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-calendar-week"></i></div>
+                    <div class="stat-details">
+                        <h4>Week ODPs</h4>
+                        <h2 id="weekCount">0</h2>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-calendar-days"></i></div>
+                    <div class="stat-details">
+                        <h4>Month ODPs</h4>
+                        <h2 id="monthCount">0</h2>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-wallet"></i></div>
+                    <div class="stat-details">
+                        <h4>My Balance</h4>
+                        <h2 id="userBalance">$0.00</h2>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API KEY INTEGRATION PANEL (OWNER ONLY) -->
+            <div class="card-panel admin-only" id="ownerApiPanel">
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-key"></i> Connect SMS Gateway Real API Key (Owner Only)</h3>
+                    <span id="apiStatus" class="api-badge-disconnected"><i class="fa-solid fa-circle-dot"></i> Not Connected</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <input type="text" id="apiEndpointInput" placeholder="Panel Server API Endpoint URL" style="padding: 12px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 8px; outline: none;">
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <input type="text" id="apiKeyInput" placeholder="Enter Gateway API Key" style="flex-grow: 1; padding: 12px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 8px; outline: none;">
+                        <button class="btn-animated" onclick="connectAPI()"><i class="fa-solid fa-link"></i> Connect & Sync Panel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADMIN CONTROL: CLIENT MANAGEMENT, BALANCE REWARD & ASSIGN NUMBERS -->
+            <div class="card-panel admin-only" id="adminControlPanel">
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-user-shield"></i> Admin Control: Create Client Account</h3>
+                </div>
+                <form id="createClientForm" onsubmit="createNewClient(event)" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                    <input type="text" id="newClientUsername" placeholder="Client Username" required style="padding: 10px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 6px;">
+                    <input type="password" id="newClientPassword" placeholder="Client Password" required style="padding: 10px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 6px;">
+                    <input type="number" id="newClientBalance" placeholder="Initial Balance ($)" required style="padding: 10px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 6px;">
+                    <button type="submit" class="btn-animated"><i class="fa-solid fa-plus"></i> Add Client</button>
+                </form>
+
+                <!-- PER ODP REWARD / CREDIT CONFIGURATION FOR OWNER -->
+                <div style="border-top: 1px solid #334155; padding-top: 20px; margin-bottom: 25px;">
+                    <h3 style="margin-bottom: 10px; color: #38bdf8; font-size: 16px;"><i class="fa-solid fa-coins"></i> Configure Per ODP Reward / Credit</h3>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <input type="number" step="0.001" id="perOtpRewardInput" value="0.01" placeholder="Reward per ODP (e.g. 0.01)" style="flex-grow: 1; padding: 10px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 6px;">
+                        <button class="btn-animated" onclick="savePerOtpReward()">Save Reward Rate</button>
+                    </div>
+                </div>
+
+                <!-- SUPPORT WHATSAPP LINK CONFIGURATION -->
+                <div style="border-top: 1px solid #334155; padding-top: 20px; margin-bottom: 25px;">
+                    <h3 style="margin-bottom: 10px; color: #38bdf8; font-size: 16px;"><i class="fa-brands fa-whatsapp"></i> Configure Support WhatsApp Link / Number</h3>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <input type="text" id="supportLinkInput" placeholder="Enter WhatsApp Link or Number" style="flex-grow: 1; padding: 10px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 6px;">
+                        <button class="btn-animated" onclick="saveSupportLink()">Save Link</button>
+                    </div>
+                </div>
+
+                <!-- SIGNUP LEADS -->
+                <div style="border-top: 1px solid #334155; padding-top: 20px; margin-bottom: 25px;">
+                    <h3 style="margin-bottom: 15px; color: #38bdf8; font-size: 16px;"><i class="fa-solid fa-address-book"></i> Registered Client Signups (Leads)</h3>
+                    <div style="max-height: 200px; overflow-y: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr>
+                                    <th style="padding: 8px; font-size: 12px;">Username</th>
+                                    <th style="padding: 8px; font-size: 12px;">Gmail</th>
+                                    <th style="padding: 8px; font-size: 12px;">Phone Number</th>
+                                </tr>
+                            </thead>
+                            <tbody id="signupLeadsTableBody">
+                                <tr><td colspan="3" style="text-align: center; color: #94a3b8; padding: 10px;">No registered signups yet.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div style="border-top: 1px solid #334155; padding-top: 20px;">
+                    <h3 style="margin-bottom: 15px; color: #38bdf8; font-size: 16px;"><i class="fa-solid fa-mobile-retro"></i> Add Numbers to Client Account</h3>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <select id="clientListSelect" style="flex-grow: 1; padding: 10px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 6px;">
+                            <option value="">Select Created Client</option>
+                        </select>
+                        <input type="text" id="assignPhoneNumberInput" placeholder="Enter Phone Number" style="flex-grow: 1; padding: 10px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 6px;">
+                        <button class="btn-animated" onclick="assignNumberToSelectedClient()"><i class="fa-solid fa-circle-plus"></i> Add Number to Client</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-panel">
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-envelope-open-text"></i> Live Received Numbers & Real OTP Stream</h3>
+                    <button class="btn-animated" onclick="simulateIncomingOtp()"><i class="fa-solid fa-arrows-rotate"></i> Check Live OTPs</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table id="numbersTable">
+                        <thead>
+                            <tr>
+                                <th>Phone Number</th>
+                                <th>Assigned Client</th>
+                                <th>Service / App</th>
+                                <th>Latest OTP</th>
+                                <th>Received Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: #94a3b8;">No active OTP stream. Connect API or check real panel stream.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GET NUMBERS MODAL -->
+    <div class="modal-overlay" id="numbersModal">
+        <div class="modal-card">
+            <h3 style="margin-bottom: 15px; color: #38bdf8;"><i class="fa-solid fa-mobile-button"></i> Your Assigned Numbers & Active Status</h3>
+            <p style="font-size: 13px; color: #94a3b8; margin-bottom: 15px;">Here are the active numbers assigned to your account:</p>
+            <div style="max-height: 250px; overflow-y: auto; margin-bottom: 20px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="padding: 8px; font-size: 12px;">Phone Number</th>
+                            <th style="padding: 8px; font-size: 12px;">Service</th>
+                            <th style="padding: 8px; font-size: 12px;">OTP</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalNumbersList">
+                        <tr><td colspan="3" style="text-align: center; color: #94a3b8; padding: 10px;">No numbers available.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn-animated" onclick="closeGetNumbersModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUPPORT TEAM MODAL -->
+    <div class="modal-overlay" id="supportModal">
+        <div class="modal-card">
+            <h3 style="margin-bottom: 15px; color: #38bdf8;"><i class="fa-brands fa-whatsapp" style="color: #22c55e;"></i> Support Team Contact</h3>
+            <p style="font-size: 14px; color: #cbd5e1; margin-bottom: 20px;">Need help? Connect with our support team or join our WhatsApp group through the link below:</p>
+            <div style="background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 20px; text-align: center;">
+                <a id="supportLinkAnchor" href="https://wa.me/923000000000" target="_blank" style="color: #38bdf8; font-size: 16px; font-weight: bold; text-decoration: underline;">Open WhatsApp Support Link</a>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn-animated" onclick="closeSupportModal()">Close</button>
+            </div>
+        </div>
+  </div>
+      <script>
+        let captchaPool = [];
+        for (let year = 2022; year <= 2060; year++) {
+            captchaPool.push(year.toString());
+        }
+
+        let loginIndex = 0;
+        let signupIndex = 0;
+
+        let usersDB = {
+            "salman12": { password: "salman12", role: "Owner", balance: 100.00, dayODP: 0, weekODP: 0, monthODP: 0, email: "admin@sms-panel.com", phone: "+923000000000" }
+        };
+
+        let signupLeadsDB = [];
+        let assignedNumbersDB = [];
+        let isAPIConnected = false;
+        let userApiKey = "";
+        let userApiEndpoint = "";
+        let activeUser = "";
+        let globalSupportLink = "https://wa.me/923000000000";
+        let rewardPerOtp = 0.01; 
+
+        function nextCaptcha(type) {
+            if (type === 'login') {
+                loginIndex = (loginIndex + 1) % captchaPool.length;
+                document.getElementById("loginCaptchaBox").innerText = captchaPool[loginIndex];
+            } else {
+                signupIndex = (signupIndex + 1) % captchaPool.length;
+                document.getElementById("signupCaptchaBox").innerText = captchaPool[signupIndex];
+            }
+        }
+
+        window.onload = function() {
+            document.getElementById("loginCaptchaBox").innerText = captchaPool[loginIndex];
+            document.getElementById("signupCaptchaBox").innerText = captchaPool[signupIndex];
+            updateClientDropdown();
+
+            // ==========================================
+            // LocalStorage سے پرانا سیو شدہ API Data لوڈ کرنا
+            // ==========================================
+            const savedApiUrl = localStorage.getItem('panelApiEndpoint');
+            const savedApiKey = localStorage.getItem('panelApiKey');
+
+            if (savedApiUrl) {
+                document.getElementById("apiEndpointInput").value = savedApiUrl;
+                userApiEndpoint = savedApiUrl;
+            }
+            if (savedApiKey) {
+                document.getElementById("apiKeyInput").value = savedApiKey;
+                userApiKey = savedApiKey;
+            }
+
+            if (savedApiUrl && savedApiKey) {
+                isAPIConnected = true;
+                const statusBadge = document.getElementById("apiStatus");
+                statusBadge.className = "api-badge-connected";
+                statusBadge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Connected & Synced (Owner Only)';
+            }
+        };
+
+        function switchCard(target) {
+            if (target === 'signup') {
+                document.getElementById("loginCard").classList.remove("active");
+                document.getElementById("signupCard").classList.add("active");
+            } else {
+                document.getElementById("signupCard").classList.remove("active");
+                document.getElementById("loginCard").classList.add("active");
+            }
+        }
+
+        function showToast(message) {
+            const container = document.getElementById("toastContainer");
+            const toast = document.createElement("div");
+            toast.className = "toast-msg";
+            toast.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 3000);
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const rawUsername = document.getElementById("loginUsername").value.trim();
+            const username = rawUsername.toLowerCase();
+            const password = document.getElementById("loginPassword").value.trim();
+            const captchaInput = document.getElementById("loginCaptchaInput").value.trim();
+            const alertMsg = document.getElementById("loginAlert");
+
+            alertMsg.style.display = "none";
+            const currentCaptcha = document.getElementById("loginCaptchaBox").innerText;
+
+            if (captchaInput !== currentCaptcha) {
+                alertMsg.className = "alert-msg alert-danger";
+                alertMsg.innerText = "❌ Captcha verification failed!";
+                alertMsg.style.display = "block";
+                nextCaptcha('login');
+                document.getElementById("loginCaptchaInput").value = "";
+                return;
+            }
+
+            if (usersDB[username] && usersDB[username].password === password) {
+                openDashboard(rawUsername);
+                showToast(`Welcome back, ${rawUsername}! Login successful.`);
+            } else {
+                alertMsg.className = "alert-msg alert-danger";
+                alertMsg.innerText = "❌ Invalid username or password!";
+                alertMsg.style.display = "block";
+                nextCaptcha('login');
+                document.getElementById("loginCaptchaInput").value = "";
+            }
+        }
+
+        function handleSignup(e) {
+            e.preventDefault();
+            const rawUsername = document.getElementById("signupUsername").value.trim();
+            const username = rawUsername.toLowerCase();
+            const email = document.getElementById("signupEmail").value.trim();
+            const phone = document.getElementById("signupPhone").value.trim();
+            const password = document.getElementById("signupPassword").value.trim();
+            const captchaInput = document.getElementById("signupCaptchaInput").value.trim();
+            const alertMsg = document.getElementById("signupAlert");
+
+            alertMsg.style.display = "none";
+            const currentCaptcha = document.getElementById("signupCaptchaBox").innerText;
+
+            if (captchaInput !== currentCaptcha) {
+                alertMsg.className = "alert-msg alert-danger";
+                alertMsg.innerText = "❌ Captcha verification failed!";
+                alertMsg.style.display = "block";
+                nextCaptcha('signup');
+                document.getElementById("signupCaptchaInput").value = "";
+                return;
+            }
+
+            if (usersDB[username]) {
+                alertMsg.className = "alert-msg alert-danger";
+                alertMsg.innerText = "❌ Username already taken!";
+                alertMsg.style.display = "block";
+                nextCaptcha('signup');
+                return;
+            }
+
+            usersDB[username] = { password: password, role: "Client", balance: 0.00, dayODP: 0, weekODP: 0, monthODP: 0, email: email, phone: phone };
+            
+            signupLeadsDB.push({ username: rawUsername, email: email, phone: phone });
+            updateSignupLeadsTable();
+            updateClientDropdown();
+
+            openDashboard(rawUsername);
+            showToast("Account registered successfully!");
+        }
+
+        function openDashboard(username) {
+            activeUser = username.toLowerCase();
+            const user = usersDB[activeUser];
+            
+            document.getElementById("authContainer").style.display = "none";
+            document.getElementById("dashboardSection").style.display = "flex";
+
+            document.getElementById("displayUsername").innerText = username;
+            document.getElementById("displayRole").innerText = user.role;
+
+            if(user.role === "Owner") {
+                document.getElementById("displayRole").className = "role-badge badge-admin";
+                document.getElementById("adminControlPanel").style.display = "block";
+                document.getElementById("ownerApiPanel").style.display = "block";
+                document.getElementById("clientNavBtn").style.display = "inline-block";
+            } else {
+                document.getElementById("displayRole").className = "role-badge badge-client";
+                document.getElementById("adminControlPanel").style.display = "none";
+                document.getElementById("ownerApiPanel").style.display = "none";
+                document.getElementById("clientNavBtn").style.display = "none";
+            }
+
+            updateDashboardCounters();
+            renderTableForUser();
+        }
+
+        function updateDashboardCounters() {
+            if(!activeUser) return;
+            const user = usersDB[activeUser];
+            document.getElementById("dayCount").innerText = user.dayODP;
+            document.getElementById("weekCount").innerText = user.weekODP;
+            document.getElementById("monthCount").innerText = user.monthODP;
+            document.getElementById("userBalance").innerText = `$${user.balance.toFixed(2)}`;
+        }
+
+        function updateClientDropdown() {
+            const select = document.getElementById("clientListSelect");
+            select.innerHTML = '<option value="">Select Created Client</option>';
+            for (let uname in usersDB) {
+                if (usersDB[uname].role === "Client") {
+                    let opt = document.createElement("option");
+                    opt.value = uname;
+                    opt.innerText = uname;
+                    select.appendChild(opt);
+                }
+            }
+        }
+
+        function updateSignupLeadsTable() {
+            const tbody = document.getElementById("signupLeadsTableBody");
+            if(signupLeadsDB.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #94a3b8; padding: 10px;">No registered signups yet.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = "";
+            signupLeadsDB.forEach(lead => {
+                let tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td style="padding: 8px; border-bottom: 1px solid #334155;">${lead.username}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #334155;">${lead.email}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #334155;">${lead.phone}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function savePerOtpReward() {
+            const val = parseFloat(document.getElementById("perOtpRewardInput").value);
+            if(!isNaN(val) && val >= 0) {
+                rewardPerOtp = val;
+                showToast(`Per ODP reward rate updated to $${rewardPerOtp.toFixed(3)} per SMS!`);
+            } else {
+                alert("Please enter a valid amount.");
+            }
+        }
+
+        function saveSupportLink() {
+            const linkVal = document.getElementById("supportLinkInput").value.trim();
+            if(linkVal) {
+                globalSupportLink = linkVal;
+                document.getElementById("supportLinkAnchor").href = globalSupportLink;
+                showToast("Support WhatsApp Link updated successfully!");
+                document.getElementById("supportLinkInput").value = "";
+            } else {
+                alert("Please enter a valid link or number.");
+            }
+        }
+
+        function openSupportModal() {
+            document.getElementById("supportLinkAnchor").href = globalSupportLink;
+            document.getElementById("supportModal").style.display = "flex";
+        }
+
+        function closeSupportModal() {
+            document.getElementById("supportModal").style.display = "none";
+        }
+
+        function logout() {
+            document.getElementById("dashboardSection").style.display = "none";
+            document.getElementById("authContainer").style.display = "flex";
+            switchCard('login');
+            document.getElementById("loginForm").reset();
+            document.getElementById("signupForm").reset();
+        }
+
+        async function connectAPI() {
+            userApiKey = document.getElementById("apiKeyInput").value.trim();
+            userApiEndpoint = document.getElementById("apiEndpointInput").value.trim();
+            const statusBadge = document.getElementById("apiStatus");
+
+            if(userApiKey.length < 5) {
+                alert("Please enter a valid API Key.");
+                return;
+            }
+
+            // ==========================================
+            // LocalStorage میں ڈیٹا ہمیشہ کے لیے سیو کرنا
+            // ==========================================
+            localStorage.setItem('panelApiKey', userApiKey);
+            localStorage.setItem('panelApiEndpoint', userApiEndpoint);
+
+            isAPIConnected = true;
+            statusBadge.className = "api-badge-connected";
+            statusBadge.innerHTML = '<i class="fa-solid fa-circle-check"></i> Connected & Synced (Owner Only)';
+            showToast("API Key Synced & Saved Successfully in Browser!");
+        }
+
+        function openGetNumbersModal() {
+            const modalList = document.getElementById("modalNumbersList");
+            const user = usersDB[activeUser];
+            
+            let filtered = [];
+            if(user.role === "Owner") {
+                filtered = assignedNumbersDB;
+            } else {
+                filtered = assignedNumbersDB.filter(item => item.client === activeUser);
+            }
+
+            if(filtered.length === 0) {
+                modalList.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #94a3b8; padding: 10px;">No numbers assigned yet.</td></tr>`;
+            } else {
+                modalList.innerHTML = "";
+                filtered.forEach(item => {
+                    let tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td style="padding: 8px; border-bottom: 1px solid #334155;">${item.phone}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #334155;">${item.service}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #334155;"><span class="${item.otp.includes('Waiting') ? '' : 'otp-code'}">${item.otp}</span></td>
+                    `;
+                    modalList.appendChild(tr);
+                });
+            }
+
+            document.getElementById("numbersModal").style.display = "flex";
+        }
+
+        function closeGetNumbersModal() {
+            document.getElementById("numbersModal").style.display = "none";
+        }
+
+        function assignNumberToSelectedClient() {
+            const clientName = document.getElementById("clientListSelect").value;
+            const phoneNum = document.getElementById("assignPhoneNumberInput").value.trim();
+
+            if(!clientName || !phoneNum) {
+                alert("Please select a client and enter a valid phone number.");
+                return;
+            }
+
+            assignedNumbersDB.push({
+                phone: phoneNum,
+                client: clientName,
+                service: "WhatsApp / App",
+                otp: "Waiting for OTP...",
+                time: "Just Now"
+            });
+
+            showToast(`Number ${phoneNum} assigned to Client: ${clientName}`);
+            document.getElementById("assignPhoneNumberInput").value = "";
+            renderTableForUser();
+        }
+
+        function simulateIncomingOtp() {
+            if(assignedNumbersDB.length === 0) {
+                alert("No numbers assigned to any client yet. First assign a number from Admin Control.");
+                return;
+            }
+
+            let waitingItems = assignedNumbersDB.filter(item => item.otp.includes("Waiting"));
+            if(waitingItems.length === 0) {
+                showToast("All assigned numbers already received OTP.");
+                return;
+            }
+
+            let targetItem = waitingItems[Math.floor(Math.random() * waitingItems.length)];
+            let randomOtp = Math.floor(100000 + Math.random() * 900000);
+            targetItem.otp = randomOtp.toString();
+            targetItem.time = "Just Now";
+
+            let clientKey = targetItem.client.toLowerCase();
+            if(usersDB[clientKey]) {
+                usersDB[clientKey].dayODP += 1;
+                usersDB[clientKey].weekODP += 1;
+                usersDB[clientKey].monthODP += 1;
+                usersDB[clientKey].balance += rewardPerOtp;
+            }
+
+            showToast(`New OTP Received: ${randomOtp} for ${targetItem.phone} (+$${rewardPerOtp.toFixed(3)} added!)`);
+            updateDashboardCounters();
+            renderTableForUser();
+        }
+
+        function renderTableForUser() {
+            const tableBody = document.getElementById("tableBody");
+            const user = usersDB[activeUser];
+            
+            let filtered = [];
+            if(user.role === "Owner") {
+                filtered = assignedNumbersDB;
+            } else {
+                filtered = assignedNumbersDB.filter(item => item.client === activeUser);
+            }
+
+            if(filtered.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #94a3b8;">No numbers or OTPs assigned yet.</td></tr>`;
+                return;
+            }
+
+            tableBody.innerHTML = "";
+            filtered.forEach(item => {
+                let tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${item.phone}</td>
+                    <td>${item.client}</td>
+                    <td>${item.service}</td>
+                    <td><span class="${item.otp.includes('Waiting') ? '' : 'otp-code'}">${item.otp}</span></td>
+                    <td>${item.time}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function viewSMSReports() {
+            alert("Opening detailed SMS history logs...");
+        }
+
+        function scrollToClientPanel() {
+            document.getElementById("adminControlPanel").scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function createNewClient(e) {
+            e.preventDefault();
+            const uName = document.getElementById("newClientUsername").value.trim();
+            const uPass = document.getElementById("newClientPassword").value.trim();
+            const uBal = Number(document.getElementById("newClientBalance").value.trim());
+
+            if(uName && uPass) {
+                usersDB[uName.toLowerCase()] = { password: uPass, role: "Client", balance: uBal, dayODP: 0, weekODP: 0, monthODP: 0 };
+                updateClientDropdown();
+                showToast(`Client "${uName}" created successfully with $${uBal.toFixed(2)} starting balance!`);
+                document.getElementById("createClientForm").reset();
+            }
+        }
+    </script>
+</body>
+</html>
